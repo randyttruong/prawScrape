@@ -120,9 +120,9 @@ class scraper:
 
 
 if __name__ == "__main__":
-    cid = "6fW8tp7LsoQsq6CpvW9-Eg"
-    c_secret = "wJjYN1FfBxFlSvhjPH3ZVp6L6xPwlw"
-    uagent = "phantom_rift"
+    cid = ""
+    c_secret = ""
+    uagent = ""
     uname = None
     subname = "gaming"
 
