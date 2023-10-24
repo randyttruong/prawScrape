@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import praw
-
+from collections import Counter
 
 class scraper:
     #
@@ -101,6 +101,12 @@ class scraper:
             f"Here are the recently interacted subnames for {commenter}: {recentSubNames}"
         )
         pass
+
+    def getCommentSubCount(self, username) -> dict:
+        redditor = self.signIn.redditor(username)
+        comments = list(redditor.comments.new())
+        subreddits = [comment.subreddit.display_name for comment in comments]
+        return Counter(subreddits)
 
 
 if __name__ == "__main__":
