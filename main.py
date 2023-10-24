@@ -2,6 +2,8 @@
 
 import praw
 from collections import Counter
+import category_dict
+
 
 class scraper:
     #
@@ -12,21 +14,13 @@ class scraper:
         )
 
         self.commenters, self.subs = set(), set()
-        self.subList = []
+        self.subList: List[str] = []
+        self.subredditCats: dict = category_dict.getList()
 
     #
     # scraper.printCommenters()
     def printCommenters(self) -> None:
         print(self.commenters)
-
-    #
-    # scraper.getSubs()
-    def parseSubFile(self, filename: str) -> None:
-        with open(filename, "r") as subList:
-            for line in subList:
-                (sub, cat1, cat2) = line.split()
-                self.subs.add((sub, cat1, cat2))
-                self.subList.append(sub)
 
     #
     # scraper.getHotCommenters()
@@ -94,6 +88,7 @@ class scraper:
             if currSub not in recentSubs:
                 recentSubs[currSub] = 0
                 recentSubNames.add(currSub)
+                self.subList.append(currSub)
             else:
                 recentSubs[currSub] += 1
 
@@ -102,24 +97,40 @@ class scraper:
         )
         pass
 
-    def getCommentSubCount(self, username) -> dict:
+    #
+    # scraper.getCommentSubCount
+    def getCommentSubCount(self, username: str) -> dict:
         redditor = self.signIn.redditor(username)
         comments = list(redditor.comments.new())
         subreddits = [comment.subreddit.display_name for comment in comments]
         return Counter(subreddits)
 
+    #
+    # scraper.getCats
+    def getCommenterCategories(self, username: str):
+        redditor = self.signIn.redditor(username)
+        self.getCommenterInterests(commenter=username)
+        finalCats = []
+        for subname in self.subList:
+            for key in self.subredditCats:
+                if subname in self.subredditCats[key]:
+                    finalCats.append(key)
+
+        return finalCats
+
 
 if __name__ == "__main__":
-    cid = "REQUIRED"
-    c_secret = "REQUIRED"
-    uagent = "REQUIRED"
+    cid = "6fW8tp7LsoQsq6CpvW9-Eg"
+    c_secret = "wJjYN1FfBxFlSvhjPH3ZVp6L6xPwlw"
+    uagent = "phantom_rift"
     uname = None
     subname = "gaming"
 
     inst = scraper(cid, c_secret, uagent, uname)
-    inst.getNewCommenters(subname)
-    inst.printCommenters()
-    inst.parseSubFile("test.txt")
-    inst.getCommenterInterests()
+    # inst.getNewCommenters(subname)
+    # inst.printCommenters()
+    # inst.parseSubFile("test.txt")
+    # inst.getCommenterInterests()
+    print(inst.getCommenterCategories("fruitrollupsalad"))
 
     # print(test)
