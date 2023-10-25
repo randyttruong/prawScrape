@@ -3,19 +3,26 @@
 import praw
 from collections import Counter
 import category_dict
+import json
 
 
-class scraper:
+class Scraper:
     #
     # scraper.__init__()
-    def __init__(self, cid: str, c_secret: str, uagent: str, uname: str):
-        self.signIn = praw.Reddit(
-            client_id=cid, client_secret=c_secret, user_agent=uagent, username=uname
-        )
+    def __init__(self, bot: str, *, user_agent: str):
+        self.reddit = praw.Reddit(bot, user_agent=user_agent)
 
         self.commenters, self.subs = set(), set()
-        self.subList: List[str] = []
+        self.subList: list[str] = []
         self.subredditCats: dict = category_dict.getList()
+        self.getSubs()
+
+    #
+    # scraper.getSubs()
+    def getSubs(self) -> None:
+        for cat in self.subredditCats.values():
+            for sub in cat:
+                self.subs.add(sub)
 
     #
     # scraper.printCommenters()
@@ -30,7 +37,7 @@ class scraper:
         postLimit: int = 10,
         childCommentLimit: int = 0,
     ) -> None:
-        sub = self.signIn.subreddit(subredditName)
+        sub = self.reddit.subreddit(subredditName)
 
         # Get hot posts
         hotPosts = sub.hot(limit=postLimit)
@@ -53,7 +60,7 @@ class scraper:
         postLimit: int = 10,
         childCommentLimit: int = 0,
     ) -> None:
-        sub = self.signIn.subreddit(subredditName)
+        sub = self.reddit.subreddit(subredditName)
 
         # Get recent posts
         recentPosts = sub.new(limit=postLimit)
@@ -79,7 +86,7 @@ class scraper:
     ) -> None:
         recentSubs = {}  # Need freq
         recentSubNames = set()
-        commenterProf = self.signIn.redditor(commenter)
+        commenterProf = self.reddit.redditor(commenter)
         comments = commenterProf.comments.new(limit=commentLimit)
 
         for comment in comments:
@@ -98,39 +105,53 @@ class scraper:
         pass
 
     #
-    # scraper.getCommentSubCount
-    def getCommentSubCount(self, username: str) -> dict:
-        redditor = self.signIn.redditor(username)
+    # scraper.getCommenterSubs
+    def getCommenterSubs(self, username: str) -> list:
+        redditor = self.reddit.redditor(username)
         comments = list(redditor.comments.new())
         subreddits = [comment.subreddit.display_name for comment in comments]
+        return subreddits
+
+    #
+    # scraper.getCommenterSubCount
+    def getCommenterSubCount(self, username: str) -> dict:
+        subreddits = self.getCommenterSubs(username)
         return Counter(subreddits)
 
     #
     # scraper.getCats
     def getCommenterCategories(self, username: str):
-        redditor = self.signIn.redditor(username)
+        redditor = self.reddit.redditor(username)
         self.getCommenterInterests(commenter=username)
         finalCats = []
-        for subname in self.subList:
+        for sub in self.subList:
             for key in self.subredditCats:
-                if subname in self.subredditCats[key]:
+                if sub in self.subredditCats[key]:
                     finalCats.append(key)
 
         return finalCats
 
+def main():
+    print("input bot name from praw.ini:\n")
+    bot = input()
+
+    user = "chromiridium"  # my username
+
+    scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}")
+
+    for sub in scraper.subs:
+        print(f"getting commenters from {sub}")
+        scraper.getHotCommenters(sub, 100)
+
+    comments = dict()
+    for commenter in scraper.commenters:
+        print(f"counting comments by {commenter}")
+        comments[commenter] = scraper.getCommenterSubs(commenter)
+
+    with open("comments.json", 'w') as f_out:
+        f_out.write(json.dumps(comments))
+
 
 if __name__ == "__main__":
-    cid = ""
-    c_secret = ""
-    uagent = ""
-    uname = None
-    subname = "gaming"
+    main()
 
-    inst = scraper(cid, c_secret, uagent, uname)
-    # inst.getNewCommenters(subname)
-    # inst.printCommenters()
-    # inst.parseSubFile("test.txt")
-    # inst.getCommenterInterests()
-    print(inst.getCommenterCategories("fruitrollupsalad"))
-
-    # print(test)
