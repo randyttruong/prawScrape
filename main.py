@@ -9,12 +9,12 @@ import json
 class Scraper:
     #
     # scraper.__init__()
-    def __init__(self, bot: str, *, user_agent: str):
+    def __init__(self, bot: str, *, user_agent: str, subs_wanted: int = 100):
         self.reddit = praw.Reddit(bot, user_agent=user_agent)
 
         self.commenters, self.subs = set(), set()
         self.subList: list[str] = []
-        self.subredditCats: dict = category_dict.getList()
+        self.subredditCats: dict = category_dict.getList(subs_wanted)
         self.getSubs()
 
     #
@@ -137,16 +137,18 @@ def main():
 
     user = "chromiridium"  # my username
 
-    scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}")
+    scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}",subs_wanted=5)
 
     for sub in scraper.subs:
         print(f"getting commenters from {sub}")
-        scraper.getHotCommenters(sub, 100)
+        scraper.getHotCommenters(sub, postLimit=5)
 
+    print(f'total commenters: {len(scraper.commenters)}')
     comments = dict()
     for commenter in scraper.commenters:
         print(f"counting comments by {commenter}")
         comments[commenter] = scraper.getCommenterSubs(commenter)
+
 
     with open("comments.json", 'w') as f_out:
         f_out.write(json.dumps(comments))
