@@ -1,6 +1,12 @@
 # prawScrape
 basic reddit scraper via praw 
 
+# use perl script 
+```
+cd ./installDeps
+perl dep.pl
+``` 
+
 # Current Functions 
 ## scraper.__init__
 constructor 
