@@ -9,14 +9,26 @@ import json
 class Scraper:
     #
     # scraper.__init__()
-    def __init__(self, bot: str, *, user_agent: str, subs_wanted: int = 100):
+    def __init__(self, bot: str, *, user_agent: str, subs_wanted: int = 1000, subreddits: str=None, commenters: str=None):
         self.reddit = praw.Reddit(bot, user_agent=user_agent)
 
         self.commenters, self.subs = set(), set()
         self.subList: list[str] = []
-        self.subredditCats: dict = category_dict.getList(subs_wanted)
-        self.getSubs()
+        if commenters is not None:
+            with open(commenters, 'r') as f:
+                self.commenters = set(json.load(f))
+        if subreddits is not None:
+            with open(subreddits, 'r') as f:
+                self.subs = set(json.load(f))
+        else:
+            self.subredditCats: dict = category_dict.getList(subs_wanted)
+            self.getSubs()
 
+    def writeToFile(self, suffix: str=""):
+        with open(f"commenters_{suffix}.json", 'w') as f:
+            f.write(json.dumps(list(self.commenters)))
+        with open(f"subs_{suffix}.json", 'w') as f:
+            f.write(json.dumps(list(self.subs)))
     #
     # scraper.getSubs()
     def getSubs(self) -> None:
@@ -137,11 +149,15 @@ def main():
 
     user = "chromiridium"  # my username
 
-    scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}",subs_wanted=5)
+    scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}",subs_wanted=1000)
 
     for sub in scraper.subs:
-        print(f"getting commenters from {sub}")
-        scraper.getHotCommenters(sub, postLimit=5)
+        try:
+            print(f"getting commenters from {sub}")
+            scraper.getHotCommenters(sub, postLimit=100)
+            break
+        except Exception as e:
+
 
     print(f'total commenters: {len(scraper.commenters)}')
     comments = dict()
