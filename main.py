@@ -4,6 +4,7 @@ import praw
 from collections import Counter
 import category_dict
 import json
+import time
 
 
 class Scraper:
@@ -143,6 +144,7 @@ class Scraper:
 
         return finalCats
 
+
 def main():
     print("input bot name from praw.ini:\n")
     bot = input()
@@ -152,19 +154,26 @@ def main():
     scraper = Scraper(bot, user_agent=f"script:pool-inf:v0.0 by u/{user}",subs_wanted=1000)
 
     for sub in scraper.subs:
-        try:
-            print(f"getting commenters from {sub}")
-            scraper.getHotCommenters(sub, postLimit=100)
-            break
-        except Exception as e:
-
+        while True:
+            try:
+                print(f"getting commenters from {sub}")
+                scraper.getHotCommenters(sub, postLimit=100)
+                break
+            except Exception as e:
+                time.sleep(60)
+                pass
 
     print(f'total commenters: {len(scraper.commenters)}')
     comments = dict()
     for commenter in scraper.commenters:
-        print(f"counting comments by {commenter}")
-        comments[commenter] = scraper.getCommenterSubs(commenter)
-
+        while True:
+            try:
+                print(f"counting comments by {commenter}")
+                comments[commenter] = scraper.getCommenterSubs(commenter)
+                break
+            except Exception as e:
+                time.sleep(60)
+                pass
 
     with open("comments.json", 'w') as f_out:
         f_out.write(json.dumps(comments))
